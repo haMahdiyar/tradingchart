@@ -2,15 +2,19 @@
   "name": "v8",
   "version": "1.0.0",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "dev": "node server.js",
+    "start": "node server.js",
+    "build": "echo \"No build step required\""
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "express": "^4.21.2",
-    "serverless-http": "^3.2.0"
+    "cors": "^2.8.5"
+  },
+  "engines": {
+    "node": ">=14.0.0"
   },
   "description": ""
 }

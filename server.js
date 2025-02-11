@@ -1,13 +1,21 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
+const cors = require('cors');
 const app = express();
-const serverless = require('serverless-http');
+const port = process.env.PORT || 3000;
+
+// Enable CORS for all routes
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 // Use middleware to parse the body as JSON
 app.use(express.json());
 
-// Serve static files from the "public" folder
+// Serve static files from the "public" folder (where the HTML file is located)
 app.use(express.static(path.join(__dirname, 'public')));
 
 // File path for saving the chart state
@@ -45,14 +53,7 @@ app.get('/loadState', (req, res) => {
   });
 });
 
-// For local development
-if (process.env.NODE_ENV !== 'production') {
-  const port = process.env.PORT || 3000;
-  app.listen(port, () => {
-    console.log(`Server is running at http://localhost:${port}`);
-  });
-}
-
-// For Vercel
-module.exports = app;
-module.exports.handler = serverless(app);
+// Start the server on the specified port
+app.listen(port, () => {
+  console.log(`Server is running at http://localhost:${port}`);
+});

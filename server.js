@@ -16,7 +16,7 @@ app.use(cors({
 // Use middleware to parse the body as JSON
 app.use(express.json());
 
-// Serve static files from the "public" folder (where the HTML file is located)
+// Serve static files from the "public" folder
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Proxy middleware for TradingView chart storage
@@ -24,45 +24,68 @@ const TRADING_VIEW_URL = 'https://saveload.tradingview.com';
 
 // Helper function to forward requests to TradingView
 async function forwardRequest(req, res, method) {
-  const url = `${TRADING_VIEW_URL}${req.url}`;
+  const targetUrl = `${TRADING_VIEW_URL}${req.url}`;
+  console.log('Forwarding request to:', targetUrl);
+  console.log('Request method:', req.method);
+  console.log('Request headers:', req.headers);
+  console.log('Request body:', req.body);
+
   try {
-    const response = await fetch(url, {
+    const headers = {
+      'Content-Type': 'application/json',
+      'User-Agent': req.headers['user-agent'] || 'TradingView Proxy',
+      'Accept': 'application/json',
+    };
+
+    console.log('Sending request with headers:', headers);
+
+    const fetchOptions = {
       method: method || req.method,
-      headers: {
-        'Content-Type': 'application/json',
-        'User-Agent': req.headers['user-agent'],
-        'Accept': 'application/json',
-      },
-      body: ['POST', 'PUT'].includes(req.method) ? JSON.stringify(req.body) : undefined,
-    });
+      headers: headers,
+    };
+
+    if (['POST', 'PUT'].includes(req.method) && req.body) {
+      fetchOptions.body = JSON.stringify(req.body);
+    }
+
+    const response = await fetch(targetUrl, fetchOptions);
+    console.log('Response status:', response.status);
+    console.log('Response headers:', response.headers);
 
     const data = await response.text();
-    res.status(response.status);
-    
-    // Forward response headers
-    for (const [key, value] of response.headers.entries()) {
-      if (key !== 'content-encoding' && key !== 'content-length') {
-        res.setHeader(key, value);
-      }
-    }
-    
-    res.send(data);
+    console.log('Response data:', data);
+
+    // Set response headers
+    res.set({
+      'Content-Type': response.headers.get('content-type') || 'application/json',
+      'Access-Control-Allow-Origin': '*'
+    });
+
+    res.status(response.status).send(data);
   } catch (error) {
     console.error('Proxy error:', error);
-    res.status(500).json({ error: 'Proxy request failed' });
+    res.status(500).json({ 
+      error: 'Proxy request failed',
+      details: error.message,
+      url: targetUrl,
+      method: req.method
+    });
   }
 }
 
 // Proxy routes for TradingView chart storage
-app.get('/1.1/charts', (req, res) => forwardRequest(req, res));
-app.post('/1.1/charts', (req, res) => forwardRequest(req, res));
-app.put('/1.1/charts', (req, res) => forwardRequest(req, res));
-app.delete('/1.1/charts', (req, res) => forwardRequest(req, res));
+app.all('/1.1/charts*', (req, res) => {
+  console.log('Received request for charts:', req.method, req.url);
+  forwardRequest(req, res);
+});
 
-app.get('/1.1/study-templates', (req, res) => forwardRequest(req, res));
-app.post('/1.1/study-templates', (req, res) => forwardRequest(req, res));
-app.put('/1.1/study-templates', (req, res) => forwardRequest(req, res));
-app.delete('/1.1/study-templates', (req, res) => forwardRequest(req, res));
+app.all('/1.1/study-templates*', (req, res) => {
+  console.log('Received request for templates:', req.method, req.url);
+  forwardRequest(req, res);
+});
+
+// Handle OPTIONS requests explicitly
+app.options('*', cors());
 
 // File path for saving the chart state
 const stateFile = path.join(__dirname, 'chartState.json');

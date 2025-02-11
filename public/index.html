@@ -29,14 +29,16 @@
         charts_storage_url: window.location.origin,
         charts_storage_api_version: "1.1",
         client_id: 'tradingview.com',
-        user_id: 'public_user',
+        user_id: 'public_user_' + Math.random().toString(36).substring(7),
         fullscreen: true,
         autosize: true,
         debug: true,
         theme: "Dark",
+        timezone: "Asia/Tehran",
         studies_overrides: {},
         overrides: {},
-        enabled_features: ["study_templates"],
+        enabled_features: ["study_templates", "save_chart_properties_to_local_storage"],
+        disabled_features: [],
         // Sample list of symbols. To display all, a comprehensive datafeed is required.
         symbols: [
           ['AAPL', 'Apple Inc.'],

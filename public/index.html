@@ -1,0 +1,82 @@
+<!DOCTYPE HTML>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TradingView - Advanced Charts</title>
+
+    <!-- Load TradingView chart library -->
+    <script src="charting_library/charting_library.standalone.js"></script>
+    <script src="datafeeds/udf/dist/bundle.js"></script>
+  </head>
+  <body>
+    <!-- Chart container -->
+    <div id="chartContainer" style="height:600px; width:100%;"></div>
+    <!-- Buttons for saving and loading chart state -->
+    <!-- <button id="saveButton">Save Chart State</button> -->
+    <!-- <button id="loadButton">Load Chart State</button> -->
+
+    <script>
+      // Initialize TradingView widget with multiple symbols (stocks, forex, and cryptocurrencies)
+      var tvWidget = new TradingView.widget({
+        container: 'chartContainer',
+        locale: 'en',
+        library_path: 'charting_library/',
+        datafeed: new Datafeeds.UDFCompatibleDatafeed("https://demo-feed-data.tradingview.com"),
+        symbol: 'AAPL',
+        interval: '1D',
+        charts_storage_url: "https://saveload.tradingview.com",
+        fullscreen: true,
+        debug: true,
+        // Sample list of symbols. To display all, a comprehensive datafeed is required.
+        symbols: [
+          ['AAPL', 'Apple Inc.'],
+          ['MSFT', 'Microsoft Corporation'],
+          ['EURUSD', 'EUR/USD'],
+          ['GBPUSD', 'GBP/USD'],
+          ['USDJPY', 'USD/JPY'],
+          ['BTCUSD', 'Bitcoin / USD'],
+          ['ETHUSD', 'Ethereum / USD'],
+          ['XRPUSD', 'Ripple / USD']
+          // Add more symbols if needed.
+        ]
+      });
+
+      // After the chart is loaded
+      tvWidget.onChartReady(function() {
+        console.log("Chart loaded.");
+        // Save button: Assuming the widget has a method to get the chart state.
+        document.getElementById('saveButton').addEventListener('click', function() {
+          // Get chart state (this method might differ in actual versions)
+          var chartState = tvWidget.activeChart && tvWidget.activeChart().getChartState
+                          ? tvWidget.activeChart().getChartState()
+                          : {};
+          // Send chart state to the server to save it in a local file
+          fetch('/saveState', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ state: chartState })
+          })
+          .then(response => response.json())
+          .then(data => { console.log('Chart state saved:', data); })
+          .catch(error => console.error('Error saving chart state:', error));
+        });
+        // Load button: Retrieve the saved state from the server and apply it to the chart
+        document.getElementById('loadButton').addEventListener('click', function() {
+          fetch('/loadState')
+          .then(response => response.json())
+          .then(data => {
+            if (data.state && tvWidget.activeChart && tvWidget.activeChart().applyChartState) {
+              tvWidget.activeChart().applyChartState(data.state);
+              console.log('Chart state restored.');
+            } else {
+              console.log('No saved state available.');
+            }
+          })
+          .catch(error => console.error('Error loading chart state:', error));
+        });
+      });
+    </script>
+  </body>
+</html>

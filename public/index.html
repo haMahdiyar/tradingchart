@@ -26,9 +26,17 @@
         datafeed: new Datafeeds.UDFCompatibleDatafeed("https://demo-feed-data.tradingview.com"),
         symbol: 'AAPL',
         interval: '1D',
-        charts_storage_url: "https://saveload.tradingview.com",
+        charts_storage_url: window.location.origin,
+        charts_storage_api_version: "1.1",
+        client_id: 'tradingview.com',
+        user_id: 'public_user',
         fullscreen: true,
+        autosize: true,
         debug: true,
+        theme: "Dark",
+        studies_overrides: {},
+        overrides: {},
+        enabled_features: ["study_templates"],
         // Sample list of symbols. To display all, a comprehensive datafeed is required.
         symbols: [
           ['AAPL', 'Apple Inc.'],
